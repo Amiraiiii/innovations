@@ -145,15 +145,8 @@ export default function CheckoutPage() {
                 </h2>
 
                 {!user && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      loginWithGoogle('alex.tech@gmail.com', 'Александр Волков');
-                      setFullName('Александр Волков');
-                      setEmail('alex.tech@gmail.com');
-                      setPhone('+7 (916) 420-15-88');
-                      setAddress('г. Москва, ул. Арбат, д. 24, кв. 12');
-                    }}
+                  <Link
+                    href="/auth"
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -166,6 +159,7 @@ export default function CheckoutPage() {
                       fontSize: '12px',
                       fontWeight: 600,
                       cursor: 'pointer',
+                      textDecoration: 'none',
                     }}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24">
@@ -174,8 +168,8 @@ export default function CheckoutPage() {
                       <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
                       <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
                     </svg>
-                    Заполнить через Google
-                  </button>
+                    Войти в аккаунт
+                  </Link>
                 )}
               </div>
 

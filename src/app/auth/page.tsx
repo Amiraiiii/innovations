@@ -17,25 +17,94 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
     if (mode === 'forgot') {
       setMessage('Инструкция по восстановлению пароля отправлена на указанную почту.');
       return;
     }
-    // Simulate login / register
-    login(email || 'alex.smirnov@lumistore.com', name || 'Алексей Смирнов', 'ADMIN');
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Заполните все обязательные поля');
+      return;
+    }
+    // Only login with actual user provided values, no random defaults
+    login(email.trim(), name.trim() || email.split('@')[0], 'USER');
     router.push('/profile');
   };
 
+  const parseJwt = (token: string) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch {
+      return null;
+    }
+  };
+
   const handleGoogleLogin = () => {
+    setErrorMessage('');
     setIsGoogleLoading(true);
-    setTimeout(() => {
-      loginWithGoogle('alex.tech@gmail.com', 'Александр Волков (Google)');
-      router.push('/profile');
-    }, 700);
+
+    const clientId =
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      '2761660971-bedp7o6pnfmk1qsfho757d5a82vjmnl4.apps.googleusercontent.com';
+
+    // Verify Google SDK is loaded in browser
+    const google = (window as any).google;
+    if (!google?.accounts?.id) {
+      setIsGoogleLoading(false);
+      setErrorMessage(
+        'Сервис Google Identity ещё не загрузился или заблокирован в браузере. Обновите страницу и проверьте блокировщик рекламы.'
+      );
+      return;
+    }
+
+    try {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response: any) => {
+          setIsGoogleLoading(false);
+          if (response?.credential) {
+            const payload = parseJwt(response.credential);
+            if (payload && payload.email) {
+              // Real data extracted strictly from Google OAuth token
+              loginWithGoogle(payload.email, payload.name || payload.email.split('@')[0]);
+              router.push('/profile');
+              return;
+            }
+          }
+          // If response does not contain valid credentials, do NOT log in and do NOT mock
+          setErrorMessage('Не удалось получить данные аккаунта Google. Вход не выполнен.');
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      // Trigger standard Google Prompt
+      google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          setIsGoogleLoading(false);
+          const reason = notification.getNotDisplayedReason?.() || notification.getSkippedReason?.() || '';
+          if (reason) {
+            setErrorMessage(`Окно Google не отобразилось (${reason}). Убедитесь, что http://localhost:3000 добавлен в Authorized JavaScript origins в Google Cloud Console.`);
+          }
+        }
+      });
+    } catch (err: any) {
+      setIsGoogleLoading(false);
+      setErrorMessage('Ошибка инициализации Google авторизации: ' + (err?.message || 'Неизвестная ошибка'));
+    }
   };
 
   return (
@@ -80,6 +149,24 @@ export default function AuthPage() {
             }}
           >
             {message}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#F87171',
+              fontSize: '13px',
+              marginBottom: '20px',
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
+          >
+            ⚠️ {errorMessage}
           </div>
         )}
 

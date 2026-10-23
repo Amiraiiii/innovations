@@ -16,7 +16,7 @@ interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   login: (email: string, name?: string, role?: 'USER' | 'ADMIN', avatarUrl?: string) => void;
-  loginWithGoogle: (email?: string, name?: string) => void;
+  loginWithGoogle: (email: string, name: string, avatarUrl?: string) => void;
   logout: () => void;
   updateProfile: (updated: Partial<UserProfile>) => void;
 }
@@ -65,15 +65,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('lumi_user', JSON.stringify(newUser));
   };
 
-  const loginWithGoogle = (email = 'alex.tech@gmail.com', name = 'Александр Волков') => {
+  const loginWithGoogle = (email: string, name: string, avatarUrl?: string) => {
+    if (!email || !name) {
+      console.warn('Google login aborted: no verified email or name provided');
+      return;
+    }
+
     const googleUser: UserProfile = {
-      id: 'usr-google-' + Math.floor(1000 + Math.random() * 9000),
+      id: 'usr-google-' + Date.now(),
       name,
       email,
-      phone: '+7 (916) 420-15-88',
-      avatarUrl: '', // No fake random avatar; user can upload their real avatar
+      phone: '',
+      avatarUrl: avatarUrl || '',
       role: 'USER',
-      savedAddress: 'г. Москва, ул. Арбат, д. 24, кв. 12',
     };
     setUser(googleUser);
     localStorage.removeItem('lumi_logged_out');

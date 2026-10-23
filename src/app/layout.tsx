@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { StoreShell } from '@/components/layout/StoreShell';
 import { CartProvider } from '@/context/CartContext';
@@ -22,6 +23,7 @@ export default function RootLayout({
             <StoreShell>{children}</StoreShell>
           </CartProvider>
         </AuthProvider>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       </body>
     </html>
   );
