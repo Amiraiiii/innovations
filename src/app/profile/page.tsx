@@ -2,18 +2,78 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Mail, Phone, MapPin, Package, Shield, LogOut, Camera, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { User, Mail, Phone, MapPin, Package, Shield, LogOut, Camera, Check, LogIn, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { CelestialStar } from '@/components/ui/CelestialGraphics';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user, logout, updateProfile } = useAuth();
 
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [address, setAddress] = useState(user?.savedAddress || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/auth');
+  };
+
+  // If user is not logged in, show sleek login gateway
+  if (!user) {
+    return (
+      <div style={{ maxWidth: '520px', margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
+        <div className="poster-glass-card" style={{ padding: '48px 32px' }}>
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(167, 155, 242, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              border: '1px solid var(--border-glow)',
+            }}
+          >
+            <User size={30} color="var(--accent-lavender)" />
+          </div>
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <CelestialStar size={14} color="var(--accent-lavender)" />
+            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '12px', color: 'var(--accent-glow)' }}>
+              LUMI ID REQUIRED
+            </span>
+          </div>
+
+          <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>
+            Вы вышли из аккаунта
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '28px' }}>
+            Авторизуйтесь через Google или Email, чтобы получить доступ к профилю, скидкам и истории заказов.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Link href="/auth">
+              <Button fullWidth size="lg">
+                <LogIn size={18} /> Войти в аккаунт
+              </Button>
+            </Link>
+            <Link href="/catalog">
+              <Button variant="ghost" fullWidth size="md">
+                Продолжить покупки в каталоге <ArrowRight size={16} />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Mock order history
   const orderHistory = [
@@ -44,14 +104,18 @@ export default function ProfilePage() {
     setTimeout(() => setSavedSuccess(false), 3000);
   };
 
-  const handleAvatarChange = () => {
-    const avatars = [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
-    ];
-    const next = avatars[(avatars.indexOf(user?.avatarUrl || '') + 1) % avatars.length];
-    updateProfile({ avatarUrl: next });
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Convert uploaded image to Data URL for instant local persistence
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        updateProfile({ avatarUrl: reader.result });
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -72,7 +136,7 @@ export default function ProfilePage() {
               </Button>
             </Link>
           )}
-          <Button variant="ghost" size="sm" onClick={logout}>
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut size={16} /> Выйти
           </Button>
         </div>
@@ -82,21 +146,45 @@ export default function ProfilePage() {
         {/* Profile Card & Edit Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className="poster-glass-card" style={{ padding: '28px', textAlign: 'center' }}>
-            <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 16px' }}>
-              <img
-                src={user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
-                alt=""
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid var(--border-glow)',
-                }}
-              />
-              <button
-                onClick={handleAvatarChange}
-                title="Сменить аватарку"
+            <div style={{ position: 'relative', width: '108px', height: '108px', margin: '0 auto 16px' }}>
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name || 'Аватар'}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid var(--accent-lavender)',
+                    boxShadow: 'var(--shadow-neon)',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(167, 155, 242, 0.15)',
+                    border: '2px dashed var(--border-glow)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--accent-glow)',
+                    fontSize: '36px',
+                    fontWeight: 800,
+                    fontFamily: 'Space Mono, monospace',
+                  }}
+                >
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
+
+              {/* Upload custom avatar trigger */}
+              <label
+                htmlFor="avatar-upload-input"
+                title="Загрузить свой аватар"
                 style={{
                   position: 'absolute',
                   bottom: '0',
@@ -104,21 +192,32 @@ export default function ProfilePage() {
                   backgroundColor: 'var(--accent-lavender)',
                   color: 'var(--text-inverse)',
                   borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
+                  width: '34px',
+                  height: '34px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
                   boxShadow: 'var(--shadow-neon)',
+                  transition: 'transform var(--transition-fast)',
                 }}
               >
-                <Camera size={16} />
-              </button>
+                <Camera size={17} />
+                <input
+                  id="avatar-upload-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+              </label>
             </div>
 
             <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{user?.name}</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>{user?.email}</p>
+            <p style={{ fontSize: '11px', color: 'var(--accent-glow)', marginTop: '6px' }}>
+              {user?.avatarUrl ? '✓ Ваш персональный аватар установлен' : 'Нажмите на камеру, чтобы загрузить фото'}
+            </p>
 
             <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'center', gap: '8px' }}>
               <Badge variant="new">Клубный статус: VIP</Badge>

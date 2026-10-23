@@ -15,7 +15,8 @@ export interface UserProfile {
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  login: (email: string, name?: string, role?: 'USER' | 'ADMIN') => void;
+  login: (email: string, name?: string, role?: 'USER' | 'ADMIN', avatarUrl?: string) => void;
+  loginWithGoogle: (email?: string, name?: string) => void;
   logout: () => void;
   updateProfile: (updated: Partial<UserProfile>) => void;
 }
@@ -27,44 +28,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
+      const isLoggedOut = localStorage.getItem('lumi_logged_out');
+      if (isLoggedOut === 'true') {
+        setUser(null);
+        return;
+      }
+
       const saved = localStorage.getItem('lumi_user');
       if (saved) {
         setUser(JSON.parse(saved));
       } else {
-        // Default guest/demo user for UI demonstration
-        const defaultUser: UserProfile = {
-          id: 'usr-4819',
-          name: 'Алексей Смирнов',
-          email: 'alex.smirnov@lumistore.com',
-          phone: '+7 (999) 450-20-10',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-          role: 'ADMIN', // Set as ADMIN so user can explore both Profile & Admin Panel
-          savedAddress: 'г. Москва, Театральный проезд, д. 5',
-        };
-        setUser(defaultUser);
-        localStorage.setItem('lumi_user', JSON.stringify(defaultUser));
+        // By default: guest is not logged in unless they explicitly authorize
+        setUser(null);
       }
     } catch (e) {
       console.error('Failed to load user from localStorage', e);
     }
   }, []);
 
-  const login = (email: string, name = 'Пользователь', role: 'USER' | 'ADMIN' = 'USER') => {
+  const login = (
+    email: string,
+    name = 'Пользователь',
+    role: 'USER' | 'ADMIN' = 'USER',
+    avatarUrl?: string
+  ) => {
     const newUser: UserProfile = {
       id: 'usr-' + Math.floor(1000 + Math.random() * 9000),
       name,
       email,
       phone: '+7 (999) 000-00-00',
-      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
+      avatarUrl: avatarUrl || '',
       role,
     };
     setUser(newUser);
+    localStorage.removeItem('lumi_logged_out');
     localStorage.setItem('lumi_user', JSON.stringify(newUser));
+  };
+
+  const loginWithGoogle = (email = 'alex.tech@gmail.com', name = 'Александр Волков') => {
+    const googleUser: UserProfile = {
+      id: 'usr-google-' + Math.floor(1000 + Math.random() * 9000),
+      name,
+      email,
+      phone: '+7 (916) 420-15-88',
+      avatarUrl: '', // No fake random avatar; user can upload their real avatar
+      role: 'USER',
+      savedAddress: 'г. Москва, ул. Арбат, д. 24, кв. 12',
+    };
+    setUser(googleUser);
+    localStorage.removeItem('lumi_logged_out');
+    localStorage.setItem('lumi_user', JSON.stringify(googleUser));
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('lumi_user');
+    localStorage.setItem('lumi_logged_out', 'true');
   };
 
   const updateProfile = (updated: Partial<UserProfile>) => {
@@ -80,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isAuthenticated: !!user,
         login,
+        loginWithGoogle,
         logout,
         updateProfile,
       }}

@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, Search, Menu, X, Sparkles, User } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { CATEGORIES } from '@/data/mockData';
 
 export const Header: React.FC = () => {
   const router = useRouter();
   const { totalCount } = useCart();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -134,24 +136,47 @@ export const Header: React.FC = () => {
           </Link>
 
 
-          {/* User Profile Link */}
+          {/* User Profile Link / Avatar */}
           <Link
-            href="/profile"
+            href={user ? '/profile' : '/auth'}
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               width: '42px',
               height: '42px',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: user?.avatarUrl ? '50%' : 'var(--radius-md)',
+              overflow: 'hidden',
               backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-light)',
+              border: user?.avatarUrl
+                ? '2px solid var(--accent-lavender)'
+                : '1px solid var(--border-light)',
               color: 'var(--text-primary)',
-              transition: 'border-color var(--transition-fast)',
+              transition: 'border-color var(--transition-fast), transform var(--transition-fast)',
+              boxShadow: user?.avatarUrl ? '0 0 10px rgba(167, 155, 242, 0.35)' : 'none',
             }}
-            title="Личный кабинет"
+            title={user ? `Кабинет: ${user.name}` : 'Войти в аккаунт'}
           >
-            <User size={19} />
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name || 'Аватар'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : user ? (
+              <span
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: 'var(--accent-glow)',
+                  fontFamily: 'Space Mono, monospace',
+                }}
+              >
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </span>
+            ) : (
+              <User size={19} />
+            )}
           </Link>
 
           {/* Cart Trigger */}
