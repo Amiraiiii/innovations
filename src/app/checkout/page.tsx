@@ -95,7 +95,13 @@ export default function CheckoutPage() {
           deliveryCost: deliveryMethod === 'courier' ? shippingCost : 0,
         }),
       })
-        .then((res) => res.json())
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Не удалось создать платёжную сессию Stripe');
+          }
+          return data;
+        })
         .then((data) => {
           clearCart();
           if (data.checkoutUrl) {
@@ -106,8 +112,8 @@ export default function CheckoutPage() {
         })
         .catch((err) => {
           console.error('Stripe redirect failed:', err);
-          clearCart();
-          router.push(`/checkout/success?orderId=${orderId}`);
+          setIsSubmitting(false);
+          alert(`Ошибка при переходе к оплате: ${err.message || 'Попробуйте снова'}`);
         });
       return;
     }
