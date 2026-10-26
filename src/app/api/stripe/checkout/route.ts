@@ -18,15 +18,15 @@ export async function POST(req: Request) {
       });
     }
 
-    // Собираем line_items для Stripe
+    // Собираем line_items для Stripe в узбекских сумах (UZS)
     const line_items: any[] = items.map((item: any) => ({
       price_data: {
-        currency: 'usd', // Stripe в тестовом режиме поддерживает usd/eur/rub
+        currency: 'uzs',
         product_data: {
           name: item.name,
           images: item.image ? [item.image.startsWith('http') ? item.image : `${origin}${item.image}`] : [],
         },
-        unit_amount: Math.round(item.price * 100), // в центах/минимальных единицах
+        unit_amount: Math.round(item.price * 100), // в тийинах (копейках сума)
       },
       quantity: item.quantity,
     }));
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     if (deliveryCost > 0) {
       line_items.push({
         price_data: {
-          currency: 'usd',
+          currency: 'uzs',
           product_data: {
             name: 'Курьерская доставка',
           },

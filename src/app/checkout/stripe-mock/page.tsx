@@ -89,7 +89,7 @@ function StripeMockContent() {
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '12px', opacity: 0.85 }}>К оплате</div>
-            <div style={{ fontSize: '22px', fontWeight: 800 }}>{Number(amount).toLocaleString('ru-RU')} ₽</div>
+            <div style={{ fontSize: '22px', fontWeight: 800 }}>{Number(amount).toLocaleString('ru-RU')} сум</div>
           </div>
         </div>
 
@@ -257,7 +257,7 @@ function StripeMockContent() {
                 transition: 'all 0.2s',
               }}
             >
-              {isProcessing ? 'Обработка платежа в Stripe...' : `Оплатить ${Number(amount).toLocaleString('ru-RU')} ₽ через Stripe`}
+              {isProcessing ? 'Обработка платежа в Stripe...' : `Оплатить ${Number(amount).toLocaleString('ru-RU')} сум через Stripe`}
             </button>
 
             <button
