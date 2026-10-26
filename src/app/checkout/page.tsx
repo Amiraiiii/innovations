@@ -20,7 +20,7 @@ export default function CheckoutPage() {
   const [deliveryMethod, setDeliveryMethod] = useState<'courier' | 'pickup'>('courier');
   const [address, setAddress] = useState(user?.savedAddress || '');
   const [comment, setComment] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cash' | 'sbp'>('online');
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cash' | 'sbp' | 'stripe'>('stripe');
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,7 +73,7 @@ export default function CheckoutPage() {
       deliveryMethod,
       paymentMethod,
       totalPrice: finalPrice,
-      status: 'Принят в обработку',
+      status: paymentMethod === 'stripe' ? 'Ожидает оплаты (Stripe)' : 'Принят в обработку',
     };
 
     try {
@@ -83,7 +83,36 @@ export default function CheckoutPage() {
       console.error('Failed to save order to localStorage', e);
     }
 
-    // Clear cart and redirect to success page
+    if (paymentMethod === 'stripe') {
+      // Инициируем платёжную сессию Stripe
+      fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart,
+          orderId,
+          customerEmail: email,
+          deliveryCost: deliveryMethod === 'courier' ? shippingCost : 0,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          clearCart();
+          if (data.checkoutUrl) {
+            window.location.href = data.checkoutUrl;
+          } else {
+            router.push(`/checkout/success?orderId=${orderId}`);
+          }
+        })
+        .catch((err) => {
+          console.error('Stripe redirect failed:', err);
+          clearCart();
+          router.push(`/checkout/success?orderId=${orderId}`);
+        });
+      return;
+    }
+
+    // Clear cart and redirect to success page for cash/sbp/etc.
     setTimeout(() => {
       clearCart();
       router.push(`/checkout/success?orderId=${orderId}`);
@@ -422,6 +451,31 @@ export default function CheckoutPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                 <div
+                  onClick={() => setPaymentMethod('stripe')}
+                  style={{
+                    padding: '16px',
+                    borderRadius: 'var(--radius-md)',
+                    border: `1px solid ${paymentMethod === 'stripe' ? '#635BFF' : 'var(--border-medium)'}`,
+                    backgroundColor: paymentMethod === 'stripe' ? 'rgba(99, 91, 255, 0.12)' : 'var(--bg-surface)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <CreditCard size={20} color={paymentMethod === 'stripe' ? '#635BFF' : 'var(--text-muted)'} />
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      Stripe
+                      <span style={{ fontSize: '10px', background: '#635BFF', color: '#fff', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                        Тест
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Visa, MC, Apple Pay</div>
+                  </div>
+                </div>
+
+                <div
                   onClick={() => setPaymentMethod('online')}
                   style={{
                     padding: '16px',
@@ -437,7 +491,7 @@ export default function CheckoutPage() {
                   <CreditCard size={20} color={paymentMethod === 'online' ? 'var(--accent-primary)' : 'var(--text-muted)'} />
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 600 }}>Картой онлайн</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>YooKassa / МИР / Visa</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>YooKassa / МИР</div>
                   </div>
                 </div>
 

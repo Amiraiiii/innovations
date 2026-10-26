@@ -96,7 +96,9 @@ function SuccessContent() {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '13px' }}>
             <span style={{ color: 'var(--text-muted)' }}>Способ оплаты:</span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-              {orderData?.paymentMethod === 'online'
+              {orderData?.paymentMethod === 'stripe' || orderData?.paymentMethod === 'stripe_test'
+                ? 'Stripe (Тестовая оплата)'
+                : orderData?.paymentMethod === 'online'
                 ? 'Онлайн картой (YooKassa)'
                 : orderData?.paymentMethod === 'sbp'
                 ? 'СБП (QR-код)'
