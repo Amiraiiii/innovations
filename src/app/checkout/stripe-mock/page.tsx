@@ -9,7 +9,8 @@ function StripeMockContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId') || 'LM-TEST';
-  const amount = searchParams.get('amount') || '0';
+  const amountUzs = searchParams.get('amountUzs') || searchParams.get('amount') || '0';
+  const amountUsd = searchParams.get('amountUsd') || (Number(amountUzs) / 12800).toFixed(2);
 
   const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242');
   const [expiry, setExpiry] = useState('12/28');
@@ -88,8 +89,11 @@ function StripeMockContent() {
             </h1>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '12px', opacity: 0.85 }}>К оплате</div>
-            <div style={{ fontSize: '22px', fontWeight: 800 }}>{Number(amount).toLocaleString('ru-RU')} сум</div>
+            <div style={{ fontSize: '12px', opacity: 0.85 }}>К списанию в Stripe</div>
+            <div style={{ fontSize: '24px', fontWeight: 800 }}>${Number(amountUsd).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+            <div style={{ fontSize: '12px', opacity: 0.85, marginTop: '2px' }}>
+              ≈ {Number(amountUzs).toLocaleString('ru-RU')} сум (1$ = 12 800 сум)
+            </div>
           </div>
         </div>
 
@@ -107,7 +111,7 @@ function StripeMockContent() {
               lineHeight: 1.5,
             }}
           >
-            <strong>Тестовый режим (Sandbox):</strong> Выберите сценарий тестирования ниже. Настоящие деньги списаны не будут.
+            <strong>Конвертация валют:</strong> Заказ в магазине оформлен на сумму <strong>{Number(amountUzs).toLocaleString('ru-RU')} сум</strong>. Через Stripe с карты списывается эквивалент <strong>${amountUsd} USD</strong> по курсу ЦБ.
           </div>
 
           {/* Preset Buttons */}
@@ -257,7 +261,7 @@ function StripeMockContent() {
                 transition: 'all 0.2s',
               }}
             >
-              {isProcessing ? 'Обработка платежа в Stripe...' : `Оплатить ${Number(amount).toLocaleString('ru-RU')} сум через Stripe`}
+              {isProcessing ? 'Обработка платежа в Stripe...' : `Оплатить $${amountUsd} USD (${Number(amountUzs).toLocaleString('ru-RU')} сум)`}
             </button>
 
             <button

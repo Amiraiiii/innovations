@@ -471,7 +471,9 @@ export default function CheckoutPage() {
                         Тест
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Visa, MC, Apple Pay</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      Оплата в USD по курсу (Visa/MC)
+                    </div>
                   </div>
                 </div>
 
